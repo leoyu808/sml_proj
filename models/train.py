@@ -50,7 +50,7 @@ def collate_fn(batch):
         E[i, :T] = e
         I[i, :T] = ind_a
         M[i, :T] = 1
-    W = torch.tensor(w).unsqueeze(1)  # (B,1)
+    W = torch.tensor(w).unsqueeze(1)
     return S, E, I, W, M, seq_lens
 
 class HybridActionRNNPolicy(nn.Module):
