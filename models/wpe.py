@@ -99,13 +99,6 @@ def fit_xgboost(X, y):
 model = fit_logistic_regression(X_train, y_train)
 
 def evaluate_win_probabilities(y_true, y_pred_prob, threshold=0.5):
-    """
-    Compute common binary‐classification metrics:
-      - ROC AUC
-      - Log Loss
-      - Brier Score
-      - Accuracy at a given probability threshold
-    """
     auc    = roc_auc_score(y_true, y_pred_prob)
     ll     = log_loss(y_true, y_pred_prob)
     brier  = brier_score_loss(y_true, y_pred_prob)
@@ -120,40 +113,13 @@ def evaluate_win_probabilities(y_true, y_pred_prob, threshold=0.5):
     }
 
 def evaluate_by_interval(X_test, y_test, y_pred_prob, interval_minutes=5, threshold=0.5):
-    """
-    Compute metrics for each fixed‐length interval (in minutes).
-    
-    Parameters
-    ----------
-    X_test : pd.DataFrame
-        Must contain a 'TIMESTAMP' column in milliseconds.
-    y_test : array‐like of shape (n_samples,)
-        True binary labels (0 or 1).
-    y_pred_prob : array‐like of shape (n_samples,)
-        Predicted probabilities for the positive class.
-    interval_minutes : int
-        Length of each interval in minutes (default: 5).
-    threshold : float
-        Probability cutoff for computing accuracy.
-    
-    Returns
-    -------
-    pd.DataFrame
-        A DataFrame indexed by interval start (ms) with columns:
-        ['roc_auc', 'log_loss', 'brier_score', 'accuracy'].
-    """
-    # Create a helper DataFrame
     df = pd.DataFrame({
         'timestamp':     X_test['TIMESTAMP'].values,
         'y_true':        y_test,
         'y_pred_prob':   y_pred_prob
     })
-    # Define interval size in milliseconds
     interval_ms = interval_minutes * 60 * 1000
-    # Assign each sample to an interval bin
     df['interval_start'] = (df['timestamp'] // interval_ms) * interval_ms
-
-    # Compute metrics per interval
     records = []
     for interval, group in df.groupby('interval_start', sort=True):
         metrics = evaluate_win_probabilities(
@@ -161,11 +127,8 @@ def evaluate_by_interval(X_test, y_test, y_pred_prob, interval_minutes=5, thresh
         )
         metrics['interval_start'] = interval
         records.append(metrics)
-
-    # Return as a DataFrame
     return pd.DataFrame.from_records(records).set_index('interval_start')
 
-# Example usage:
 # y_pred = model.predict_proba(X_test[feature_cols])[:, 1]
 # interval_metrics = evaluate_by_interval(X_test, y_test, y_pred)
 # print(interval_metrics)
